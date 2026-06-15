@@ -1,38 +1,9 @@
-// vite.config.ts
-import { sentryVitePlugin } from "@sentry/vite-plugin";
-import { createLogger, defineConfig, Plugin } from "vite";
+import { defineConfig, Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import path from "path";
 import fs from "fs";
 import pkg from "./package.json";
-
-function createFilteredLogger() {
-  const logger = createLogger();
-  const originalError = logger.error.bind(logger);
-
-  let lastRestartLog = 0;
-  const DEBOUNCE_MS = 2000;
-
-  logger.error = (msg, options) => {
-    const isProxyError =
-      msg.includes("ws proxy socket error") ||
-      msg.includes("ws proxy error:") ||
-      msg.includes("http proxy error:");
-
-    if (isProxyError) {
-      const now = Date.now();
-      if (now - lastRestartLog > DEBOUNCE_MS) {
-        logger.warn("Proxy connection closed, auto-reconnecting...");
-        lastRestartLog = now;
-      }
-      return;
-    }
-    originalError(msg, options);
-  };
-
-  return logger;
-}
 
 function executorSchemasPlugin(): Plugin {
   const VIRTUAL_ID = 'virtual:executor-schemas';
@@ -41,7 +12,7 @@ function executorSchemasPlugin(): Plugin {
   return {
     name: 'executor-schemas-plugin',
     resolveId(id) {
-      if (id === VIRTUAL_ID) return RESOLVED_VIRTUAL_ID; // keep it virtual
+      if (id === VIRTUAL_ID) return RESOLVED_VIRTUAL_ID;
       return null;
     },
     load(id) {
@@ -57,13 +28,12 @@ function executorSchemasPlugin(): Plugin {
 
       files.forEach((file, i) => {
         const varName = `__schema_${i}`;
-        const importPath = `shared/schemas/${file}`; // uses your alias
-        const key = file.replace(/\.json$/, '').toUpperCase(); // claude_code -> CLAUDE_CODE
+        const importPath = `shared/schemas/${file}`;
+        const key = file.replace(/\.json$/, '').toUpperCase();
         imports.push(`import ${varName} from "${importPath}";`);
         entries.push(`  "${key}": ${varName}`);
       });
 
-      // IMPORTANT: pure JS (no TS types), and quote keys.
       const code = `
 ${imports.join('\n')}
 
@@ -79,7 +49,6 @@ export default schemas;
 }
 
 export default defineConfig({
-  customLogger: createFilteredLogger(),
   publicDir: path.resolve(__dirname, '../public'),
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
@@ -108,7 +77,6 @@ export default defineConfig({
         ],
       },
     }),
-    sentryVitePlugin({ org: 'bloop-ai', project: 'vibe-kanban' }),
     executorSchemasPlugin(),
   ],
   resolve: {
@@ -130,19 +98,24 @@ export default defineConfig({
   server: {
     port: parseInt(process.env.FRONTEND_PORT || '3000'),
     proxy: {
-      '/api': {
-        target: `http://localhost:${process.env.BACKEND_PORT || '3001'}`,
+      '/v1': {
+        target: `http://localhost:${process.env.BACKEND_PORT || '8000'}`,
         changeOrigin: true,
-        ws: true,
+        ws: true, // Enable WebSocket/SSE support
+        configure: (proxy) => {
+          // Prevent proxy from closing SSE connections
+          proxy.on('proxyRes', (proxyRes, req) => {
+            if (req.url?.includes('/logs/stream')) {
+              proxyRes.headers['connection'] = 'keep-alive';
+              proxyRes.headers['cache-control'] = 'no-cache';
+            }
+          });
+        },
       },
     },
     fs: {
       allow: [path.resolve(__dirname, '.'), path.resolve(__dirname, '../..')],
     },
-    open: process.env.VITE_OPEN === 'true',
-    allowedHosts: [
-      '.trycloudflare.com', // allow all cloudflared tunnels
-    ],
   },
   optimizeDeps: {
     exclude: ['wa-sqlite'],

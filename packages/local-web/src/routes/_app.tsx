@@ -1,121 +1,155 @@
-import { useEffect, type ReactNode } from 'react';
-import {
-  createFileRoute,
-  useParams,
-  useLocation,
-} from '@tanstack/react-router';
+import { type ReactNode, useMemo } from 'react';
+import { createFileRoute, useParams, useNavigate, Outlet } from '@tanstack/react-router';
 import { Provider as NiceModalProvider } from '@ebay/nice-modal-react';
-import { SequenceTrackerProvider } from '@/shared/keyboard/SequenceTracker';
-import { SequenceIndicator } from '@/shared/keyboard/SequenceIndicator';
-import { useWorkspaceShortcuts } from '@/shared/keyboard/useWorkspaceShortcuts';
-import { useIssueShortcuts } from '@/shared/keyboard/useIssueShortcuts';
-import { useKeyShowHelp, Scope } from '@/shared/keyboard';
-import { KeyboardShortcutsDialog } from '@/shared/dialogs/shared/KeyboardShortcutsDialog';
-import { ReleaseNotesDialog } from '@/shared/dialogs/global/ReleaseNotesDialog';
-import { TerminalProvider } from '@/shared/providers/TerminalProvider';
-import { HostIdProvider } from '@/shared/providers/HostIdProvider';
-import { WorkspaceProvider } from '@/shared/providers/WorkspaceProvider';
-import { ExecutionProcessesProvider } from '@/shared/providers/ExecutionProcessesProvider';
-import { LogsPanelProvider } from '@/shared/providers/LogsPanelProvider';
-import { ActionsProvider } from '@/shared/providers/ActionsProvider';
-import { useWorkspaceContext } from '@/shared/hooks/useWorkspaceContext';
-import { useUserSystem } from '@/shared/hooks/useUserSystem';
-import { SharedAppLayout } from '@/shared/components/ui-new/containers/SharedAppLayout';
+import { cn } from '@/shared/lib/utils';
+import { useCouncilProjects } from '@/shared/hooks/council';
+import { PlusIcon, KanbanIcon, BrainIcon, ChatCircleIcon, FileTextIcon } from '@phosphor-icons/react';
+import { CreateProjectModal } from '@/shared/dialogs/CreateProjectDialog';
+import type { Project } from 'shared/council-types';
 
-function KeyboardShortcutsHandler() {
-  useKeyShowHelp(
-    () => {
-      KeyboardShortcutsDialog.show();
-    },
-    { scope: Scope.GLOBAL }
+/**
+ * Simplified app layout for Council Kanban.
+ *
+ * Replaces VK's complex layout (orgs, auth, hosts, workspaces) with:
+ * - Left sidebar: project list
+ * - Main area: outlet (kanban board)
+ */
+
+function CouncilAppLayout({ children }: { children: ReactNode }) {
+  const { projectId } = useParams({ strict: false });
+  const navigate = useNavigate();
+  const { data: projects = [], isLoading } = useCouncilProjects();
+
+  const sortedProjects = useMemo(
+    () =>
+      [...projects].sort(
+        (a: Project, b: Project) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      ),
+    [projects]
   );
-  useWorkspaceShortcuts();
-  useIssueShortcuts();
-  return null;
-}
 
-function ReleaseNotesHandler() {
-  const { config, updateAndSaveConfig } = useUserSystem();
-  const location = useLocation();
+  const handleProjectClick = (id: string) => {
+    void navigate({ to: '/projects/$projectId', params: { projectId: id } });
+  };
 
-  useEffect(() => {
-    if (!config || !config.remote_onboarding_acknowledged) return;
+  const handleMemoryClick = () => {
+    void navigate({ to: '/memory' });
+  };
 
-    const pathname = location.pathname;
-    if (pathname.startsWith('/onboarding')) {
-      return;
-    }
+  const handleChatClick = () => {
+    void navigate({ to: '/chat' });
+  };
 
-    let cancelled = false;
+  const handleDocumentsClick = () => {
+    void navigate({ to: '/documents' });
+  };
 
-    const showReleaseNotes = async () => {
-      if (config.show_release_notes) {
-        await ReleaseNotesDialog.show();
-        if (!cancelled) {
-          await updateAndSaveConfig({ show_release_notes: false });
-        }
-        ReleaseNotesDialog.hide();
-      }
-    };
-
-    void showReleaseNotes();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [config, updateAndSaveConfig, location.pathname]);
-
-  return null;
-}
-
-function ExecutionProcessesProviderWrapper({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  const { selectedSessionId } = useWorkspaceContext();
+  const handleCreateProject = () => {
+    void CreateProjectModal.show({});
+  };
 
   return (
-    <ExecutionProcessesProvider sessionId={selectedSessionId}>
-      {children}
-    </ExecutionProcessesProvider>
-  );
-}
+    <div className="grid grid-cols-[240px_1fr] h-screen bg-primary">
+      {/* Left sidebar: project list */}
+      <div className="bg-secondary border-r border-border flex flex-col h-full">
+        {/* Header */}
+        <div className="p-3 border-b border-border flex items-center gap-2">
+          <KanbanIcon className="h-5 w-5 text-brand" weight="bold" />
+          <span className="text-sm font-semibold text-high">Council</span>
+        </div>
 
-function AppRouteProviders({ children }: { children: ReactNode }) {
-  return (
-    <HostIdProvider>
-      <WorkspaceProvider>
-        <ExecutionProcessesProviderWrapper>
-          <LogsPanelProvider>
-            <ActionsProvider>
-              {/* NiceModal renders dialogs as siblings of children at the
-                  Provider level, so it must be inside all providers that
-                  dialogs depend on (Workspace, Actions, etc.). */}
-              <NiceModalProvider>{children}</NiceModalProvider>
-            </ActionsProvider>
-          </LogsPanelProvider>
-        </ExecutionProcessesProviderWrapper>
-      </WorkspaceProvider>
-    </HostIdProvider>
+        {/* Navigation items */}
+        <div className="p-2 space-y-0.5">
+          <button
+            onClick={handleChatClick}
+            className={cn(
+              'flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-left cursor-pointer',
+              'transition-colors',
+              'text-normal hover:bg-secondary-foreground/10'
+            )}
+          >
+            <ChatCircleIcon className="h-4 w-4" weight="fill" />
+            ARC Chat
+          </button>
+          <button
+            onClick={handleDocumentsClick}
+            className={cn(
+              'flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-left cursor-pointer',
+              'transition-colors',
+              'text-normal hover:bg-secondary-foreground/10'
+            )}
+          >
+            <FileTextIcon className="h-4 w-4" weight="fill" />
+            Documents
+          </button>
+          <button
+            onClick={handleMemoryClick}
+            className={cn(
+              'flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-left cursor-pointer',
+              'transition-colors',
+              'text-normal hover:bg-secondary-foreground/10'
+            )}
+          >
+            <BrainIcon className="h-4 w-4" weight="fill" />
+            Memory
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-border mx-2" />
+
+        {/* Project list */}
+        <div className="flex-1 overflow-y-auto p-2">
+          {isLoading ? (
+            <div className="px-3 py-2 text-xs text-low">Loading...</div>
+          ) : sortedProjects.length === 0 ? (
+            <div className="px-3 py-4 text-xs text-low">No projects yet</div>
+          ) : (
+            sortedProjects.map((project) => (
+              <button
+                key={project.id}
+                onClick={() => handleProjectClick(project.id)}
+                className={cn(
+                  'flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-left cursor-pointer',
+                  'transition-colors mb-1',
+                  project.id === projectId
+                    ? 'bg-brand/10 text-high font-medium'
+                    : 'text-normal hover:bg-secondary-foreground/10'
+                )}
+                title={project.description ?? project.name}
+              >
+                <span
+                  className="h-2.5 w-2.5 rounded-full shrink-0 bg-brand"
+                />
+                <span className="truncate">{project.name}</span>
+              </button>
+            ))
+          )}
+        </div>
+
+        {/* Create project button */}
+        <div className="p-2 border-t border-border">
+          <button
+            onClick={handleCreateProject}
+            className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-low hover:text-normal hover:bg-secondary-foreground/10 cursor-pointer transition-colors"
+          >
+            <PlusIcon className="h-4 w-4" />
+            New Project
+          </button>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="relative min-h-0 overflow-hidden">
+        <NiceModalProvider>{children}</NiceModalProvider>
+      </div>
+    </div>
   );
 }
 
 function AppLayoutRouteComponent() {
-  const { hostId } = useParams({ strict: false });
-
-  return (
-    <AppRouteProviders key={hostId ?? 'local'}>
-      <ReleaseNotesHandler />
-      <SequenceTrackerProvider>
-        <SequenceIndicator />
-        <KeyboardShortcutsHandler />
-        <TerminalProvider>
-          <SharedAppLayout />
-        </TerminalProvider>
-      </SequenceTrackerProvider>
-    </AppRouteProviders>
-  );
+  return <CouncilAppLayout><Outlet /></CouncilAppLayout>;
 }
 
 export const Route = createFileRoute('/_app')({

@@ -1,5 +1,5 @@
-import { ProjectKanban } from '@/pages/kanban/ProjectKanban';
+import CouncilKanbanContainer from './CouncilKanbanContainer';
 
 export function LocalProjectKanban() {
-  return <ProjectKanban />;
+  return <CouncilKanbanContainer />;
 }
