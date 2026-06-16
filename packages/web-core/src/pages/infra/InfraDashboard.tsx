@@ -102,6 +102,8 @@ function ServiceRow({
   if (info.nodes != null) details.push(`${info.nodes} nodes`);
   if (info.edges != null) details.push(`${info.edges} edges`);
   if (info.db_size_mb != null) details.push(`${info.db_size_mb}MB`);
+  if (info.model_count != null) details.push(`${info.model_count} models`);
+  if (info.active_model) details.push(`active: ${info.active_model}`);
 
   return (
     <div

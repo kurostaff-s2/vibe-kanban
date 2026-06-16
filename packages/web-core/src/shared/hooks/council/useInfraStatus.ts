@@ -23,6 +23,9 @@ export interface InfraService {
   db_size_mb?: number | null;
   top_kinds?: Record<string, number> | null;
   top_langs?: Record<string, number> | null;
+  model_count?: number | null;
+  active_model?: string | null;
+  models?: string[] | null;
 }
 
 export interface InfraStatus {
