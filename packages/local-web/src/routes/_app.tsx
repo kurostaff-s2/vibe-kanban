@@ -3,7 +3,7 @@ import { createFileRoute, useParams, useNavigate, Outlet } from '@tanstack/react
 import { Provider as NiceModalProvider } from '@ebay/nice-modal-react';
 import { cn } from '@/shared/lib/utils';
 import { useCouncilProjects } from '@/shared/hooks/council';
-import { PlusIcon, KanbanIcon, BrainIcon, ChatCircleIcon, FileTextIcon } from '@phosphor-icons/react';
+import { PlusIcon, KanbanIcon, BrainIcon, ChatCircleIcon, FileTextIcon, MonitorIcon, DatabaseIcon, MagnifyingGlassIcon, SwapIcon } from '@phosphor-icons/react';
 import { CreateProjectModal } from '@/shared/dialogs/CreateProjectDialog';
 import type { Project } from 'shared/council-types';
 
@@ -93,6 +93,58 @@ function CouncilAppLayout({ children }: { children: ReactNode }) {
           >
             <BrainIcon className="h-4 w-4" weight="fill" />
             Memory
+          </button>
+          <button
+            onClick={() =>
+              void navigate({ to: '/infra' })
+            }
+            className={cn(
+              'flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-left cursor-pointer',
+              'transition-colors',
+              'text-normal hover:bg-secondary-foreground/10'
+            )}
+          >
+            <MonitorIcon className="h-4 w-4" weight="fill" />
+            Infra
+          </button>
+          <button
+            onClick={() =>
+              void navigate({ to: '/modelswap' })
+            }
+            className={cn(
+              'flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-left cursor-pointer',
+              'transition-colors',
+              'text-normal hover:bg-secondary-foreground/10'
+            )}
+          >
+            <SwapIcon className="h-4 w-4" weight="fill" />
+            Model Swap
+          </button>
+          <button
+            onClick={() =>
+              void navigate({ to: '/codegraph' })
+            }
+            className={cn(
+              'flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-left cursor-pointer',
+              'transition-colors',
+              'text-normal hover:bg-secondary-foreground/10'
+            )}
+          >
+            <DatabaseIcon className="h-4 w-4" weight="fill" />
+            CodeGraph
+          </button>
+          <button
+            onClick={() =>
+              void navigate({ to: '/memsearch' })
+            }
+            className={cn(
+              'flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-left cursor-pointer',
+              'transition-colors',
+              'text-normal hover:bg-secondary-foreground/10'
+            )}
+          >
+            <MagnifyingGlassIcon className="h-4 w-4" weight="fill" />
+            MemSearch
           </button>
         </div>
 

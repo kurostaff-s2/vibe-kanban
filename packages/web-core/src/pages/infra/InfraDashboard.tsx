@@ -16,7 +16,6 @@ import {
   useServiceRestart,
   RESTARTABLE_SERVICES,
 } from '@/shared/hooks/council/useServiceRestart';
-import { LlamaModelsPanel, LlamaActivityStats, LlamaPerformanceChart } from './llama';
 
 // ── Status Dot ─────────────────────────────────────────────────────────
 
@@ -544,11 +543,6 @@ export function InfraDashboard() {
 
       {/* Service Restart Panel */}
       <ServiceRestartPanel />
-
-      {/* Llama-Swap Panels */}
-      <LlamaModelsPanel />
-      <LlamaActivityStats />
-      <LlamaPerformanceChart />
 
       {/* Log Panel */}
       {showLogs && <LogPanel />}
