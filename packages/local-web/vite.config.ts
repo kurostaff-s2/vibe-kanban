@@ -112,6 +112,22 @@ export default defineConfig({
           });
         },
       },
+      '/llama': {
+        target: `http://localhost:${process.env.LLAMA_SWAP_PORT || '9292'}`,
+        changeOrigin: true,
+        ws: true, // Enable SSE support for /api/events
+        rewrite: (path) => path.replace(/^\/llama/, ''),
+        configure: (proxy) => {
+          // Prevent proxy from closing SSE connections
+          proxy.on('proxyRes', (proxyRes, req) => {
+            if (req.url?.includes('/api/events')) {
+              proxyRes.headers['connection'] = 'keep-alive';
+              proxyRes.headers['cache-control'] = 'no-cache';
+              proxyRes.headers['x-accel-buffering'] = 'no';
+            }
+          });
+        },
+      },
     },
     fs: {
       allow: [path.resolve(__dirname, '.'), path.resolve(__dirname, '../..')],
