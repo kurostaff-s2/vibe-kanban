@@ -80,104 +80,110 @@ export function useLlamaSwapStats(
       }));
     };
 
-    es.addEventListener('model_state', (e: MessageEvent) => {
+    // llama-swap emits all events as 'message' with a JSON envelope:
+    // { type: "modelStatus" | "metrics" | "inflight" | "logData", data: <payload> }
+    es.onmessage = (e: MessageEvent) => {
       try {
-        const data: LlamaModel[] = JSON.parse(e.data);
-        setStats((prev) => ({
-          ...prev,
-          models: data,
-          loadingModels: data
-            .filter((m) => m.state === 'starting' || m.state === 'stopping')
-            .map((m) => m.id),
-        }));
+        const envelope = JSON.parse(e.data);
+        const type = envelope?.type;
+        const payload = envelope?.data;
+
+        switch (type) {
+          case 'modelStatus': {
+            const models: LlamaModel[] =
+              typeof payload === 'string' ? JSON.parse(payload) : payload;
+            setStats((prev) => ({
+              ...prev,
+              models,
+              loadingModels: models
+                .filter((m) => m.state === 'starting' || m.state === 'stopping')
+                .map((m) => m.id),
+            }));
+            break;
+          }
+          case 'metrics': {
+            const entries: LlamaActivityEntry[] =
+              typeof payload === 'string' ? JSON.parse(payload) : payload;
+            if (Array.isArray(entries) && entries.length > 0) {
+              setStats((prev) => {
+                const all = [...prev.activityEntries, ...entries].slice(
+                  -MAX_STATS_ENTRIES
+                );
+                return {
+                  ...prev,
+                  activityEntries: all,
+                  totalRequests: prev.totalRequests + entries.length,
+                  totalInputTokens:
+                    prev.totalInputTokens +
+                    entries.reduce(
+                      (s, e) => s + (e.tokens?.input_tokens ?? 0),
+                      0
+                    ),
+                  totalOutputTokens:
+                    prev.totalOutputTokens +
+                    entries.reduce(
+                      (s, e) => s + (e.tokens?.output_tokens ?? 0),
+                      0
+                    ),
+                  totalCacheTokens:
+                    prev.totalCacheTokens +
+                    entries.reduce(
+                      (s, e) => s + (e.tokens?.cache_tokens ?? 0),
+                      0
+                    ),
+                };
+              });
+            }
+            break;
+          }
+          case 'inflight': {
+            const raw =
+              typeof payload === 'string' ? JSON.parse(payload) : payload;
+            // inflight can be { total: N } or an array
+            const data: LlamaInFlight[] = Array.isArray(raw) ? raw : [];
+            setStats((prev) => ({ ...prev, inflightRequests: data }));
+            break;
+          }
+          case 'logData': {
+            const raw =
+              typeof payload === 'string' ? JSON.parse(payload) : payload;
+            const entry: LlamaLogEntry = {
+              type: raw?.source === 'upstream' ? 'upstream' : 'proxy',
+              timestamp: new Date().toISOString(),
+              message: raw?.data ?? '',
+            };
+            setStats((prev) => ({
+              ...prev,
+              logs: [...prev.logs, entry].slice(-MAX_STATS_ENTRIES),
+            }));
+            break;
+          }
+          case 'sys_stats': {
+            const entry: LlamaSysStat =
+              typeof payload === 'string' ? JSON.parse(payload) : payload;
+            setStats((prev) => ({
+              ...prev,
+              sysStats: [...prev.sysStats, entry].slice(-MAX_STATS_ENTRIES),
+            }));
+            break;
+          }
+          case 'gpu_stats': {
+            const entry: LlamaGpuStat =
+              typeof payload === 'string' ? JSON.parse(payload) : payload;
+            setStats((prev) => {
+              const existing = prev.gpuStats.filter((g) => g.id !== entry.id);
+              return {
+                ...prev,
+                gpuStats: [...existing, entry].slice(-MAX_STATS_ENTRIES),
+              };
+            });
+            break;
+          }
+        }
       } catch {
         // ignore parse errors
       }
-    });
-
-    es.addEventListener('activity', (e: MessageEvent) => {
-      try {
-        const entry: LlamaActivityEntry = JSON.parse(e.data);
-        setStats((prev) => {
-          const entries = [...prev.activityEntries, entry].slice(
-            -MAX_STATS_ENTRIES
-          );
-          return {
-            ...prev,
-            activityEntries: entries,
-            totalRequests: prev.totalRequests + 1,
-            totalInputTokens:
-              prev.totalInputTokens + (entry.tokens?.input_tokens ?? 0),
-            totalOutputTokens:
-              prev.totalOutputTokens + (entry.tokens?.output_tokens ?? 0),
-            totalCacheTokens:
-              prev.totalCacheTokens + (entry.tokens?.cache_tokens ?? 0),
-          };
-        });
-      } catch {
-        // ignore
-      }
-    });
-
-    es.addEventListener('sys_stats', (e: MessageEvent) => {
-      try {
-        const entry: LlamaSysStat = JSON.parse(e.data);
-        setStats((prev) => ({
-          ...prev,
-          sysStats: [...prev.sysStats, entry].slice(-MAX_STATS_ENTRIES),
-        }));
-      } catch {
-        // ignore
-      }
-    });
-
-    es.addEventListener('gpu_stats', (e: MessageEvent) => {
-      try {
-        const entry: LlamaGpuStat = JSON.parse(e.data);
-        setStats((prev) => {
-          // Replace GPU stats by GPU id
-          const existing = prev.gpuStats.filter((g) => g.id !== entry.id);
-          return {
-            ...prev,
-            gpuStats: [...existing, entry].slice(-MAX_STATS_ENTRIES),
-          };
-        });
-      } catch {
-        // ignore
-      }
-    });
-
-    es.addEventListener('inflight', (e: MessageEvent) => {
-      try {
-        const data: LlamaInFlight[] = JSON.parse(e.data);
-        setStats((prev) => ({ ...prev, inflightRequests: data }));
-      } catch {
-        // ignore
-      }
-    });
-
-    es.addEventListener('log', (e: MessageEvent) => {
-      try {
-        const entry: LlamaLogEntry = JSON.parse(e.data);
-        setStats((prev) => ({
-          ...prev,
-          logs: [...prev.logs, entry].slice(-MAX_STATS_ENTRIES),
-        }));
-      } catch {
-        // ignore
-      }
-    });
-
-    es.addEventListener('error', (e: MessageEvent) => {
-      try {
-        const data = JSON.parse(e.data);
-        const msg =
-          typeof data === 'string' ? data : (data?.message as string) ?? 'Unknown error';
-        setStats((prev) => ({ ...prev, error: msg }));
-      } catch {
-        setStats((prev) => ({ ...prev, error: e.data ?? 'SSE error' }));
-      }
-    });
+    };
 
     es.onerror = () => {
       es.close();
