@@ -174,7 +174,7 @@ function DetailPanel({ runId, onClose }: { runId: string; onClose: () => void })
   return (
     <div className="fixed inset-0 z-[300] flex">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative ml-auto w-[min(640px,90vw)] h-full bg-surface border-l border-border overflow-y-auto p-6">
+      <div className="relative ml-auto w-[min(640px,90vw)] h-full bg-primary border-l border-border shadow-2xl overflow-y-auto p-6">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-1 rounded-md hover:bg-muted/20 text-low hover:text-normal transition-colors"
