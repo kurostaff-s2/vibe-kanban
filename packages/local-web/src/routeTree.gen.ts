@@ -11,8 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppModelswapRouteImport } from './routes/_app.modelswap'
+import { Route as AppMemsearchRouteImport } from './routes/_app.memsearch'
 import { Route as AppMemoryRouteImport } from './routes/_app.memory'
+import { Route as AppInfraRouteImport } from './routes/_app.infra'
 import { Route as AppDocumentsRouteImport } from './routes/_app.documents'
+import { Route as AppCodegraphRouteImport } from './routes/_app.codegraph'
 import { Route as AppChatRouteImport } from './routes/_app.chat'
 import { Route as AppProjectsProjectIdRouteImport } from './routes/_app.projects.$projectId'
 import { Route as AppProjectsProjectIdIssuesIssueIdRouteImport } from './routes/_app.projects.$projectId_.issues.$issueId'
@@ -26,14 +30,34 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppModelswapRoute = AppModelswapRouteImport.update({
+  id: '/modelswap',
+  path: '/modelswap',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMemsearchRoute = AppMemsearchRouteImport.update({
+  id: '/memsearch',
+  path: '/memsearch',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMemoryRoute = AppMemoryRouteImport.update({
   id: '/memory',
   path: '/memory',
   getParentRoute: () => AppRoute,
 } as any)
+const AppInfraRoute = AppInfraRouteImport.update({
+  id: '/infra',
+  path: '/infra',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDocumentsRoute = AppDocumentsRouteImport.update({
   id: '/documents',
   path: '/documents',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCodegraphRoute = AppCodegraphRouteImport.update({
+  id: '/codegraph',
+  path: '/codegraph',
   getParentRoute: () => AppRoute,
 } as any)
 const AppChatRoute = AppChatRouteImport.update({
@@ -56,16 +80,24 @@ const AppProjectsProjectIdIssuesIssueIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/chat': typeof AppChatRoute
+  '/codegraph': typeof AppCodegraphRoute
   '/documents': typeof AppDocumentsRoute
+  '/infra': typeof AppInfraRoute
   '/memory': typeof AppMemoryRoute
+  '/memsearch': typeof AppMemsearchRoute
+  '/modelswap': typeof AppModelswapRoute
   '/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/projects/$projectId/issues/$issueId': typeof AppProjectsProjectIdIssuesIssueIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/chat': typeof AppChatRoute
+  '/codegraph': typeof AppCodegraphRoute
   '/documents': typeof AppDocumentsRoute
+  '/infra': typeof AppInfraRoute
   '/memory': typeof AppMemoryRoute
+  '/memsearch': typeof AppMemsearchRoute
+  '/modelswap': typeof AppModelswapRoute
   '/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/projects/$projectId/issues/$issueId': typeof AppProjectsProjectIdIssuesIssueIdRoute
 }
@@ -74,8 +106,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/_app/chat': typeof AppChatRoute
+  '/_app/codegraph': typeof AppCodegraphRoute
   '/_app/documents': typeof AppDocumentsRoute
+  '/_app/infra': typeof AppInfraRoute
   '/_app/memory': typeof AppMemoryRoute
+  '/_app/memsearch': typeof AppMemsearchRoute
+  '/_app/modelswap': typeof AppModelswapRoute
   '/_app/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/_app/projects/$projectId_/issues/$issueId': typeof AppProjectsProjectIdIssuesIssueIdRoute
 }
@@ -84,16 +120,24 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/chat'
+    | '/codegraph'
     | '/documents'
+    | '/infra'
     | '/memory'
+    | '/memsearch'
+    | '/modelswap'
     | '/projects/$projectId'
     | '/projects/$projectId/issues/$issueId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/chat'
+    | '/codegraph'
     | '/documents'
+    | '/infra'
     | '/memory'
+    | '/memsearch'
+    | '/modelswap'
     | '/projects/$projectId'
     | '/projects/$projectId/issues/$issueId'
   id:
@@ -101,8 +145,12 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/_app/chat'
+    | '/_app/codegraph'
     | '/_app/documents'
+    | '/_app/infra'
     | '/_app/memory'
+    | '/_app/memsearch'
+    | '/_app/modelswap'
     | '/_app/projects/$projectId'
     | '/_app/projects/$projectId_/issues/$issueId'
   fileRoutesById: FileRoutesById
@@ -128,6 +176,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/modelswap': {
+      id: '/_app/modelswap'
+      path: '/modelswap'
+      fullPath: '/modelswap'
+      preLoaderRoute: typeof AppModelswapRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/memsearch': {
+      id: '/_app/memsearch'
+      path: '/memsearch'
+      fullPath: '/memsearch'
+      preLoaderRoute: typeof AppMemsearchRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/memory': {
       id: '/_app/memory'
       path: '/memory'
@@ -135,11 +197,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMemoryRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/infra': {
+      id: '/_app/infra'
+      path: '/infra'
+      fullPath: '/infra'
+      preLoaderRoute: typeof AppInfraRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/documents': {
       id: '/_app/documents'
       path: '/documents'
       fullPath: '/documents'
       preLoaderRoute: typeof AppDocumentsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/codegraph': {
+      id: '/_app/codegraph'
+      path: '/codegraph'
+      fullPath: '/codegraph'
+      preLoaderRoute: typeof AppCodegraphRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/chat': {
@@ -168,16 +244,24 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppChatRoute: typeof AppChatRoute
+  AppCodegraphRoute: typeof AppCodegraphRoute
   AppDocumentsRoute: typeof AppDocumentsRoute
+  AppInfraRoute: typeof AppInfraRoute
   AppMemoryRoute: typeof AppMemoryRoute
+  AppMemsearchRoute: typeof AppMemsearchRoute
+  AppModelswapRoute: typeof AppModelswapRoute
   AppProjectsProjectIdRoute: typeof AppProjectsProjectIdRoute
   AppProjectsProjectIdIssuesIssueIdRoute: typeof AppProjectsProjectIdIssuesIssueIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppChatRoute: AppChatRoute,
+  AppCodegraphRoute: AppCodegraphRoute,
   AppDocumentsRoute: AppDocumentsRoute,
+  AppInfraRoute: AppInfraRoute,
   AppMemoryRoute: AppMemoryRoute,
+  AppMemsearchRoute: AppMemsearchRoute,
+  AppModelswapRoute: AppModelswapRoute,
   AppProjectsProjectIdRoute: AppProjectsProjectIdRoute,
   AppProjectsProjectIdIssuesIssueIdRoute:
     AppProjectsProjectIdIssuesIssueIdRoute,

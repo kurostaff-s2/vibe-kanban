@@ -15,7 +15,17 @@ import {
   type LlamaModelState,
   type LlamaModel,
 } from '@/shared/types/llama-swap';
-import { useLlamaSwapStats } from '@/shared/hooks/council/useLlamaSwapStats';
+
+// ── Props (data provided by parent to avoid duplicate SSE connections) ──
+
+interface LlamaModelsPanelProps {
+  models: LlamaModel[];
+  connected: boolean;
+  error: string | null;
+  onLoad: (id: string) => Promise<void>;
+  onUnload: (id: string) => Promise<void>;
+  onUnloadAll: () => Promise<void>;
+}
 
 // ── State Badge ────────────────────────────────────────────────────────
 
@@ -147,15 +157,14 @@ function ModelRow({
 
 // ── Panel ──────────────────────────────────────────────────────────────
 
-export function LlamaModelsPanel() {
-  const {
-    models,
-    connected,
-    error,
-    loadModel,
-    unloadModel,
-    unloadAll,
-  } = useLlamaSwapStats();
+export function LlamaModelsPanel({
+  models,
+  connected,
+  error,
+  onLoad: loadModel,
+  onUnload: unloadModel,
+  onUnloadAll: unloadAll,
+}: LlamaModelsPanelProps) {
 
   const [collapsed, setCollapsed] = useState(false);
   const [showUnlisted, setShowUnlisted] = useState(false);

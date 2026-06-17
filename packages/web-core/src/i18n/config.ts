@@ -104,6 +104,7 @@ i18n
       zh: ['zh-Hans'], // Map generic Chinese to Simplified Chinese
       default: ['en'],
     },
+    ns: ['common', 'settings', 'projects', 'tasks', 'organization'],
     defaultNS: 'common',
     debug: import.meta.env.DEV,
     // Include 'zh' + Traditional Chinese locales for browser detection

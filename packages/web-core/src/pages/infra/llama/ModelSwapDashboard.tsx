@@ -1,9 +1,21 @@
+import { useState } from 'react';
 import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react';
 import { cn } from '@/shared/lib/utils';
 import { useLlamaSwapStats } from '@/shared/hooks/council/useLlamaSwapStats';
 import { LlamaModelsPanel } from './LlamaModelsPanel';
 import { LlamaActivityStats } from './LlamaActivityStats';
 import { LlamaPerformanceChart } from './LlamaPerformanceChart';
+import { LlamaLogPanel } from './LlamaLogPanel';
+import { LlamaServerConfig } from './LlamaServerConfig';
+
+type TabKey = 'stats' | 'performance' | 'config' | 'logs';
+
+const tabs: { key: TabKey; label: string }[] = [
+  { key: 'stats', label: 'Activity Stats' },
+  { key: 'performance', label: 'Performance' },
+  { key: 'config', label: 'Server Config' },
+  { key: 'logs', label: 'Logs' },
+];
 
 /**
  * Dedicated Model Swap page.
@@ -12,7 +24,9 @@ import { LlamaPerformanceChart } from './LlamaPerformanceChart';
  * layout optimized for model management and monitoring.
  */
 export function ModelSwapDashboard() {
-  const { connected, error, refreshPerformance } = useLlamaSwapStats();
+  const stats = useLlamaSwapStats();
+  const { connected, error, refreshPerformance } = stats;
+  const [activeTab, setActiveTab] = useState<TabKey>('stats');
 
   return (
     <div className="h-screen flex flex-col bg-primary overflow-hidden">
@@ -58,17 +72,42 @@ export function ModelSwapDashboard() {
       <div className="flex-1 overflow-y-auto">
         {/* Model list — sticky top */}
         <div className="border-b border-border sticky top-0 z-10 bg-primary">
-          <LlamaModelsPanel />
+          <LlamaModelsPanel
+            models={stats.models}
+            connected={stats.connected}
+            error={stats.error}
+            onLoad={stats.loadModel}
+            onUnload={stats.unloadModel}
+            onUnloadAll={stats.unloadAll}
+          />
         </div>
 
-        {/* Stats & charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
-          <div className="border-r border-border min-h-0">
-            <LlamaActivityStats />
-          </div>
-          <div className="min-h-0">
-            <LlamaPerformanceChart />
-          </div>
+        {/* Tabs */}
+        <div className="flex border-b border-border sticky top-0 z-10 bg-primary">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                'px-4 py-2 text-sm font-medium transition-colors border-b-2',
+                activeTab === tab.key
+                  ? 'border-brand text-high'
+                  : 'border-transparent text-low hover:text-normal hover:bg-secondary/20'
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab content */}
+        <div className={cn(
+          activeTab === 'logs' ? 'h-[calc(100vh-180px)]' : 'min-h-0'
+        )}>
+          {activeTab === 'stats' && <LlamaActivityStats />}
+          {activeTab === 'performance' && <LlamaPerformanceChart />}
+          {activeTab === 'config' && <LlamaServerConfig />}
+          {activeTab === 'logs' && <LlamaLogPanel />}
         </div>
       </div>
     </div>

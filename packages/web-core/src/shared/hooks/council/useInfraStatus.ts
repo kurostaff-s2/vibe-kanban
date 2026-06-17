@@ -50,6 +50,8 @@ const SERVICE_LABELS: Record<string, string> = {
   codegraph: 'CodeGraph',
   odysseus: 'Odysseus',
   llama_swap: 'Llama Swap',
+  frontend: 'Frontend (Vite)',
+  web_search: 'Web Search (SearXNG)',
 };
 
 export function useInfraStatus(refreshMs = 30000) {

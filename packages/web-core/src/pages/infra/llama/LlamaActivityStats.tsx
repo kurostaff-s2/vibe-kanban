@@ -191,6 +191,11 @@ export function LlamaActivityStats() {
       ? ((totalCacheTokens / Math.max(totalInputTokens, 1)) * 100).toFixed(1)
       : '0.0';
 
+  // Latest per-request speed metrics
+  const latestEntry = activityEntries[0] ?? null;
+  const latestPP = latestEntry?.tokens?.prompt_per_second ?? 0;
+  const latestTG = latestEntry?.tokens?.tokens_per_second ?? 0;
+
   return (
     <div className="border-t border-border">
       {/* Header */}
@@ -241,6 +246,27 @@ export function LlamaActivityStats() {
               color={parseFloat(cacheHitRate) > 50 ? 'text-green-400' : 'text-yellow-400'}
             />
           </div>
+
+          {/* Latest Speed Metrics */}
+          {latestEntry && (
+            <div>
+              <div className="text-[10px] font-semibold text-low uppercase tracking-wider mb-2">
+                Latest Request ({latestEntry.model})
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <SummaryCard
+                  label="PP (prompt/s)"
+                  value={latestPP.toFixed(0)}
+                  color="text-cyan-400"
+                />
+                <SummaryCard
+                  label="TG/s (tokens/s)"
+                  value={latestTG.toFixed(0)}
+                  color="text-orange-400"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Duration Histogram */}
           {durations.length > 0 && (

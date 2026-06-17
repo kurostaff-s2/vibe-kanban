@@ -9,3 +9,5 @@ export { useCouncilDocuments, useCreateDocument, useUpdateDocument, useDeleteDoc
 export type { CouncilDocument } from './useCouncilDocuments';
 export { useModelSwap } from './useModelSwap';
 export type { AvailableModel, ModelSwapState } from './useModelSwap';
+export { useInfraStatus, SERVICE_LABELS } from './useInfraStatus';
+export type { InfraStatus, InfraService } from './useInfraStatus';

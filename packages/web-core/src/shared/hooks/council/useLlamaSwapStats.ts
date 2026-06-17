@@ -73,6 +73,9 @@ export function useLlamaSwapStats(
 
     es.onopen = () => {
       reconnectRef.current = SSE_RECONNECT_BASE_MS;
+      if (import.meta.env.DEV) {
+        console.log('[llama-swap] SSE connection opened');
+      }
       setStats((prev) => ({
         ...prev,
         connected: true,
@@ -90,8 +93,18 @@ export function useLlamaSwapStats(
 
         switch (type) {
           case 'modelStatus': {
-            const models: LlamaModel[] =
+            let parsed: unknown =
               typeof payload === 'string' ? JSON.parse(payload) : payload;
+            if (!Array.isArray(parsed)) {
+              if (import.meta.env.DEV) {
+                console.warn('[llama-swap] modelStatus payload is not an array:', parsed);
+              }
+              break;
+            }
+            const models: LlamaModel[] = parsed;
+            if (import.meta.env.DEV) {
+              console.log(`[llama-swap] modelStatus: ${models.length} models`, models.map(m => `${m.id}(${m.state})`).join(', '));
+            }
             setStats((prev) => ({
               ...prev,
               models,
@@ -180,19 +193,24 @@ export function useLlamaSwapStats(
             break;
           }
         }
-      } catch {
-        // ignore parse errors
+      } catch (err) {
+        if (import.meta.env.DEV) {
+          console.warn('[llama-swap] SSE parse error:', err, e.data?.slice(0, 200));
+        }
       }
     };
 
-    es.onerror = () => {
-      es.close();
-      esRef.current = null;
-
+    es.onerror = (evt) => {
+      // Extract error detail if available
+      const errDetail = evt?.type || 'SSE connection error';
       setStats((prev) => ({
         ...prev,
         connected: false,
+        error: `Disconnected: ${errDetail} (reconnecting...)`,
       }));
+
+      es.close();
+      esRef.current = null;
 
       // Exponential backoff reconnect
       const delay = Math.min(
@@ -230,7 +248,7 @@ export function useLlamaSwapStats(
   const loadModel = useCallback(
     async (modelId: string) => {
       try {
-        await llamaFetch(`/upstream/${modelId}`);
+        await llamaFetch(`/upstream/${modelId}/`);
       } catch (e) {
         setStats((prev) => ({
           ...prev,
