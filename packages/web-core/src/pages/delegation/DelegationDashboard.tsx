@@ -206,12 +206,12 @@ function DetailPanel({ runId, onClose }: { runId: string; onClose: () => void })
 
             {/* Provenance */}
             {(detail.source_id || detail.trace_id) && (
-              <div className="flex flex-wrap gap-3 text-xs font-mono text-low">
+              <div className="flex flex-col gap-1.5 text-xs font-mono text-low break-all">
                 {detail.source_id && (
-                  <span>source: {detail.source_id.slice(0, 12)}...</span>
+                  <span>source_id: {detail.source_id}</span>
                 )}
                 {detail.trace_id && (
-                  <span>trace: {detail.trace_id.slice(0, 16)}...</span>
+                  <span>trace_id: {detail.trace_id}</span>
                 )}
               </div>
             )}
