@@ -16,6 +16,7 @@ import { Route as AppMemsearchRouteImport } from './routes/_app.memsearch'
 import { Route as AppMemoryRouteImport } from './routes/_app.memory'
 import { Route as AppInfraRouteImport } from './routes/_app.infra'
 import { Route as AppDocumentsRouteImport } from './routes/_app.documents'
+import { Route as AppDelegationRouteImport } from './routes/_app.delegation'
 import { Route as AppCodegraphRouteImport } from './routes/_app.codegraph'
 import { Route as AppChatRouteImport } from './routes/_app.chat'
 import { Route as AppProjectsProjectIdRouteImport } from './routes/_app.projects.$projectId'
@@ -55,6 +56,11 @@ const AppDocumentsRoute = AppDocumentsRouteImport.update({
   path: '/documents',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDelegationRoute = AppDelegationRouteImport.update({
+  id: '/delegation',
+  path: '/delegation',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCodegraphRoute = AppCodegraphRouteImport.update({
   id: '/codegraph',
   path: '/codegraph',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/chat': typeof AppChatRoute
   '/codegraph': typeof AppCodegraphRoute
+  '/delegation': typeof AppDelegationRoute
   '/documents': typeof AppDocumentsRoute
   '/infra': typeof AppInfraRoute
   '/memory': typeof AppMemoryRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/chat': typeof AppChatRoute
   '/codegraph': typeof AppCodegraphRoute
+  '/delegation': typeof AppDelegationRoute
   '/documents': typeof AppDocumentsRoute
   '/infra': typeof AppInfraRoute
   '/memory': typeof AppMemoryRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/_app/chat': typeof AppChatRoute
   '/_app/codegraph': typeof AppCodegraphRoute
+  '/_app/delegation': typeof AppDelegationRoute
   '/_app/documents': typeof AppDocumentsRoute
   '/_app/infra': typeof AppInfraRoute
   '/_app/memory': typeof AppMemoryRoute
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/'
     | '/chat'
     | '/codegraph'
+    | '/delegation'
     | '/documents'
     | '/infra'
     | '/memory'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/'
     | '/chat'
     | '/codegraph'
+    | '/delegation'
     | '/documents'
     | '/infra'
     | '/memory'
@@ -146,6 +157,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/_app/chat'
     | '/_app/codegraph'
+    | '/_app/delegation'
     | '/_app/documents'
     | '/_app/infra'
     | '/_app/memory'
@@ -211,6 +223,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDocumentsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/delegation': {
+      id: '/_app/delegation'
+      path: '/delegation'
+      fullPath: '/delegation'
+      preLoaderRoute: typeof AppDelegationRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/codegraph': {
       id: '/_app/codegraph'
       path: '/codegraph'
@@ -245,6 +264,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppChatRoute: typeof AppChatRoute
   AppCodegraphRoute: typeof AppCodegraphRoute
+  AppDelegationRoute: typeof AppDelegationRoute
   AppDocumentsRoute: typeof AppDocumentsRoute
   AppInfraRoute: typeof AppInfraRoute
   AppMemoryRoute: typeof AppMemoryRoute
@@ -257,6 +277,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppChatRoute: AppChatRoute,
   AppCodegraphRoute: AppCodegraphRoute,
+  AppDelegationRoute: AppDelegationRoute,
   AppDocumentsRoute: AppDocumentsRoute,
   AppInfraRoute: AppInfraRoute,
   AppMemoryRoute: AppMemoryRoute,

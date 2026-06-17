@@ -3,7 +3,7 @@ import { createFileRoute, useParams, useNavigate, Outlet } from '@tanstack/react
 import { Provider as NiceModalProvider } from '@ebay/nice-modal-react';
 import { cn } from '@/shared/lib/utils';
 import { useCouncilProjects } from '@/shared/hooks/council';
-import { PlusIcon, KanbanIcon, BrainIcon, ChatCircleIcon, FileTextIcon, MonitorIcon, DatabaseIcon, MagnifyingGlassIcon, SwapIcon } from '@phosphor-icons/react';
+import { PlusIcon, KanbanIcon, BrainIcon, ChatCircleIcon, FileTextIcon, MonitorIcon, DatabaseIcon, MagnifyingGlassIcon, SwapIcon, UsersIcon } from '@phosphor-icons/react';
 import { CreateProjectModal } from '@/shared/dialogs/CreateProjectDialog';
 import type { Project } from 'shared/council-types';
 
@@ -145,6 +145,19 @@ function CouncilAppLayout({ children }: { children: ReactNode }) {
           >
             <MagnifyingGlassIcon className="h-4 w-4" weight="fill" />
             MemSearch
+          </button>
+          <button
+            onClick={() =>
+              void navigate({ to: '/delegation' })
+            }
+            className={cn(
+              'flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-left cursor-pointer',
+              'transition-colors',
+              'text-normal hover:bg-secondary-foreground/10'
+            )}
+          >
+            <UsersIcon className="h-4 w-4" weight="fill" />
+            Delegations
           </button>
         </div>
 
