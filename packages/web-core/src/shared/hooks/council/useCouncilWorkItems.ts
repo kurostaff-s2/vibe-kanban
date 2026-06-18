@@ -3,6 +3,7 @@ import { makeCouncilRequest } from '@/shared/lib/councilApiTransport';
 import type { WorkItem, CreateWorkItemRequest, UpdateWorkItemRequest } from 'shared/council-types';
 
 const WORK_ITEMS_KEY = ['council', 'work-items'];
+const WORK_ITEM_KEY = 'council-work-item'; // prefix for single-item queries
 
 /**
  * Fetch all work items, optionally filtered by project_id.
@@ -64,6 +65,59 @@ export function useCreateWorkItem() {
     onSuccess: () => {
       // Invalidate work items cache to refetch
       queryClient.invalidateQueries({ queryKey: WORK_ITEMS_KEY });
+    },
+  });
+}
+
+/**
+ * Fetch a single work item by ID.
+ */
+export function useCouncilWorkItem(id: string | undefined) {
+  return useQuery<WorkItem, Error, WorkItem, [string, string | undefined]>({
+    queryKey: [WORK_ITEM_KEY, id],
+    queryFn: async () => {
+      if (!id) throw new Error('No work item ID provided');
+      const res = await makeCouncilRequest(`/v1/work-items/${id}`);
+      if (!res.ok) throw new Error(`Failed to fetch work item: ${res.status}`);
+      return res.json();
+    },
+    enabled: !!id,
+    refetchInterval: 3000,
+    staleTime: 1000,
+  });
+}
+
+/**
+ * Soft-delete a work item via PATCH (backend doesn't support DELETE).
+ */
+export function useDeleteWorkItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Fetch current revision first
+      const fetchRes = await makeCouncilRequest(`/v1/work-items/${id}`);
+      if (!fetchRes.ok) throw new Error(`Failed to fetch work item: ${fetchRes.status}`);
+      const current = await fetchRes.json();
+
+      const body = {
+        patch: { is_deleted: 1 },
+        expected_revision: current.revision,
+      };
+
+      const res = await makeCouncilRequest(`/v1/work-items/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(`Failed to delete work item: ${res.status} ${JSON.stringify(err)}`);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: WORK_ITEMS_KEY });
+      queryClient.removeQueries({ queryKey: [WORK_ITEM_KEY] as const });
     },
   });
 }
