@@ -25,6 +25,7 @@ interface DelegationRecord {
   md_file_path: string | null;
   source_id: string | null;
   trace_id: string | null;
+  mode: string;
   created_at: string;
 }
 
@@ -50,6 +51,7 @@ interface DelegationDetail {
   md_file_path: string | null;
   source_id: string | null;
   trace_id: string | null;
+  mode: string;
   created_at: string;
 }
 
@@ -62,6 +64,7 @@ async function fetchDelegations(
   fromModel?: string,
   toModel?: string,
   chainId?: string,
+  mode?: string,
 ): Promise<DelegationListResponse> {
   const params = new URLSearchParams({
     page: String(page),
@@ -71,6 +74,7 @@ async function fetchDelegations(
   if (fromModel) params.set('from_model', fromModel);
   if (toModel) params.set('to_model', toModel);
   if (chainId) params.set('chain_id', chainId);
+  if (mode) params.set('mode', mode);
 
   const res = await fetch(`/v1/council/delegations?${params.toString()}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
@@ -122,6 +126,24 @@ function RoleBadge({ role }: { role: string }) {
       colors[role.toLowerCase()] || 'bg-muted/20 text-low',
     )}>
       {role}
+    </span>
+  );
+}
+
+function ModeBadge({ mode }: { mode: string }) {
+  const colors: Record<string, string> = {
+    subagent: 'bg-emerald-500/10 text-emerald-400',
+    pipeline: 'bg-orange-500/10 text-orange-400',
+    review: 'bg-blue-500/10 text-blue-400',
+    chain: 'bg-purple-500/10 text-purple-400',
+    extension: 'bg-pink-500/10 text-pink-400',
+  };
+  return (
+    <span className={cn(
+      'inline-block px-2 py-0.5 rounded-md text-[10px] font-medium',
+      colors[mode?.toLowerCase()] || 'bg-muted/20 text-low',
+    )}>
+      {mode || 'unknown'}
     </span>
   );
 }
@@ -192,6 +214,7 @@ function DetailPanel({ runId, onClose }: { runId: string; onClose: () => void })
               <h2 className="text-sm font-semibold text-high mb-2">Delegation Detail</h2>
               <div className="flex flex-wrap gap-2">
                 <ChainBadge chainId={detail.chain_id} />
+                <ModeBadge mode={detail.mode} />
                 <RoleBadge role={detail.role} />
                 <span className="text-[10px] text-low font-mono">#{detail.batch}.{detail.retry}</span>
               </div>
@@ -276,6 +299,7 @@ export function DelegationDashboard() {
   const [filterFrom, setFilterFrom] = useState('');
   const [filterTo, setFilterTo] = useState('');
   const [filterChain, setFilterChain] = useState('');
+  const [filterMode, setFilterMode] = useState('');
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
@@ -298,6 +322,7 @@ export function DelegationDashboard() {
         filterFrom || undefined,
         filterTo || undefined,
         filterChain || undefined,
+        filterMode || undefined,
       );
       setData(result);
     } catch (e: any) {
@@ -305,7 +330,7 @@ export function DelegationDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [page, perPage, debouncedSearch, filterFrom, filterTo, filterChain]);
+  }, [page, perPage, debouncedSearch, filterFrom, filterTo, filterChain, filterMode]);
 
   useEffect(() => { void fetchData(); }, [fetchData]);
 
@@ -321,6 +346,12 @@ export function DelegationDashboard() {
   const uniqueToModels = useMemo(() => {
     const set = new Set<string>();
     data?.delegations.forEach((d) => { if (d.to_model) set.add(d.to_model); });
+    return [...set].sort();
+  }, [data]);
+
+  const uniqueModes = useMemo(() => {
+    const set = new Set<string>();
+    data?.delegations.forEach((d) => { if (d.mode) set.add(d.mode); });
     return [...set].sort();
   }, [data]);
 
@@ -379,6 +410,14 @@ export function DelegationDashboard() {
             <option value="">To Model</option>
             {uniqueToModels.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
+          <select
+            value={filterMode}
+            onChange={(e) => { setFilterMode(e.target.value); setPage(1); }}
+            className="px-2 py-1.5 rounded-md text-xs bg-muted/10 border border-border text-normal focus:outline-none focus:border-brand/50"
+          >
+            <option value="">Mode</option>
+            {uniqueModes.map((m) => <option key={m} value={m}>{m}</option>)}
+          </select>
           <input
             type="text"
             placeholder="Chain ID..."
@@ -408,6 +447,7 @@ export function DelegationDashboard() {
             <thead className="sticky top-0 bg-secondary/95 backdrop-blur border-b border-border z-10">
               <tr>
                 <th className="text-left px-4 py-2 text-[10px] font-semibold text-low uppercase tracking-wider">Chain</th>
+                <th className="text-left px-4 py-2 text-[10px] font-semibold text-low uppercase tracking-wider">Mode</th>
                 <th className="text-left px-4 py-2 text-[10px] font-semibold text-low uppercase tracking-wider">From</th>
                 <th className="text-left px-4 py-2 text-[10px] font-semibold text-low uppercase tracking-wider">To</th>
                 <th className="text-left px-4 py-2 text-[10px] font-semibold text-low uppercase tracking-wider">Role</th>
@@ -425,6 +465,9 @@ export function DelegationDashboard() {
                 >
                   <td className="px-4 py-2">
                     <ChainBadge chainId={d.chain_id} />
+                  </td>
+                  <td className="px-4 py-2">
+                    <ModeBadge mode={d.mode} />
                   </td>
                   <td className="px-4 py-2">
                     <ModelBadge model={d.from_model} label="" />
