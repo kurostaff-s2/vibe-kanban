@@ -131,12 +131,19 @@ export type SseEventType =
   | 'inflight'
   | 'log'
   | 'swap_event'
+  | 'restart'
   | 'error';
 
 export interface SseEvent {
   event: SseEventType;
   data: unknown;
   timestamp?: string;
+}
+
+export interface LlamaRestartData {
+  timestamp: string;
+  version: string;
+  commit: string;
 }
 
 // ── State Color Mapping ────────────────────────────────────────────────

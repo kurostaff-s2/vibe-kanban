@@ -189,8 +189,8 @@ function DetailPanel({ runId, onClose }: { runId: string; onClose: () => void })
     return () => { cancelled = true; };
   }, [runId]);
 
-  const mdUrl = detail?.md_file_path
-    ? `/v1/council/delegations/chain/${detail.chain_id}/raw`
+  const mdUrl = detail?.run_id
+    ? `/v1/council/delegations/run/${encodeURIComponent(detail.run_id)}/raw`
     : null;
 
   return (
@@ -272,8 +272,6 @@ function DetailPanel({ runId, onClose }: { runId: string; onClose: () => void })
             {mdUrl && (
               <a
                 href={mdUrl}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs bg-brand/10 text-brand hover:bg-brand/20 transition-colors"
               >
                 <FileTextIcon className="h-3.5 w-3.5" weight="fill" />

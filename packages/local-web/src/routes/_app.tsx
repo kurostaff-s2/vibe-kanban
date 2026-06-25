@@ -3,7 +3,7 @@ import { createFileRoute, useParams, useNavigate, Outlet } from '@tanstack/react
 import { Provider as NiceModalProvider } from '@ebay/nice-modal-react';
 import { cn } from '@/shared/lib/utils';
 import { useCouncilProjects } from '@/shared/hooks/council';
-import { PlusIcon, KanbanIcon, BrainIcon, ChatCircleIcon, FileTextIcon, MonitorIcon, DatabaseIcon, MagnifyingGlassIcon, SwapIcon, UsersIcon } from '@phosphor-icons/react';
+import { PlusIcon, KanbanIcon, BrainIcon, FileTextIcon, MonitorIcon, DatabaseIcon, MagnifyingGlassIcon, SwapIcon, UsersIcon } from '@phosphor-icons/react';
 import { CreateProjectModal } from '@/shared/dialogs/CreateProjectDialog';
 import type { Project } from 'shared/council-types';
 
@@ -37,10 +37,6 @@ function CouncilAppLayout({ children }: { children: ReactNode }) {
     void navigate({ to: '/memory' });
   };
 
-  const handleChatClick = () => {
-    void navigate({ to: '/chat' });
-  };
-
   const handleDocumentsClick = () => {
     void navigate({ to: '/documents' });
   };
@@ -61,17 +57,6 @@ function CouncilAppLayout({ children }: { children: ReactNode }) {
 
         {/* Navigation items */}
         <div className="p-2 space-y-0.5">
-          <button
-            onClick={handleChatClick}
-            className={cn(
-              'flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-left cursor-pointer',
-              'transition-colors',
-              'text-normal hover:bg-secondary-foreground/10'
-            )}
-          >
-            <ChatCircleIcon className="h-4 w-4" weight="fill" />
-            ARC Chat
-          </button>
           <button
             onClick={handleDocumentsClick}
             className={cn(

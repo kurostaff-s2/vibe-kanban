@@ -49,7 +49,6 @@ const argGroups: Record<string, string> = {
   'mlock': 'Performance',
   'cache-ram': 'Performance',
   'cont-batching': 'Performance',
-  'threads': 'Performance',
 
   // Sampling
   'temp': 'Sampling',

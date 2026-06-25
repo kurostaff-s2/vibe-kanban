@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   ArrowClockwiseIcon,
   DatabaseIcon,
-  FolderOpenIcon,
   ListIcon,
   WarningIcon,
   CodeIcon,

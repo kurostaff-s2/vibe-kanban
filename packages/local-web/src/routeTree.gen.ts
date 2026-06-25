@@ -18,7 +18,6 @@ import { Route as AppInfraRouteImport } from './routes/_app.infra'
 import { Route as AppDocumentsRouteImport } from './routes/_app.documents'
 import { Route as AppDelegationRouteImport } from './routes/_app.delegation'
 import { Route as AppCodegraphRouteImport } from './routes/_app.codegraph'
-import { Route as AppChatRouteImport } from './routes/_app.chat'
 import { Route as AppProjectsProjectIdRouteImport } from './routes/_app.projects.$projectId'
 import { Route as AppProjectsProjectIdIssuesIssueIdRouteImport } from './routes/_app.projects.$projectId_.issues.$issueId'
 
@@ -66,11 +65,6 @@ const AppCodegraphRoute = AppCodegraphRouteImport.update({
   path: '/codegraph',
   getParentRoute: () => AppRoute,
 } as any)
-const AppChatRoute = AppChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppProjectsProjectIdRoute = AppProjectsProjectIdRouteImport.update({
   id: '/projects/$projectId',
   path: '/projects/$projectId',
@@ -85,7 +79,6 @@ const AppProjectsProjectIdIssuesIssueIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/chat': typeof AppChatRoute
   '/codegraph': typeof AppCodegraphRoute
   '/delegation': typeof AppDelegationRoute
   '/documents': typeof AppDocumentsRoute
@@ -98,7 +91,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/chat': typeof AppChatRoute
   '/codegraph': typeof AppCodegraphRoute
   '/delegation': typeof AppDelegationRoute
   '/documents': typeof AppDocumentsRoute
@@ -113,7 +105,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
-  '/_app/chat': typeof AppChatRoute
   '/_app/codegraph': typeof AppCodegraphRoute
   '/_app/delegation': typeof AppDelegationRoute
   '/_app/documents': typeof AppDocumentsRoute
@@ -128,7 +119,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/chat'
     | '/codegraph'
     | '/delegation'
     | '/documents'
@@ -141,7 +131,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/chat'
     | '/codegraph'
     | '/delegation'
     | '/documents'
@@ -155,7 +144,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_app'
-    | '/_app/chat'
     | '/_app/codegraph'
     | '/_app/delegation'
     | '/_app/documents'
@@ -237,13 +225,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCodegraphRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/chat': {
-      id: '/_app/chat'
-      path: '/chat'
-      fullPath: '/chat'
-      preLoaderRoute: typeof AppChatRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/projects/$projectId': {
       id: '/_app/projects/$projectId'
       path: '/projects/$projectId'
@@ -262,7 +243,6 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
-  AppChatRoute: typeof AppChatRoute
   AppCodegraphRoute: typeof AppCodegraphRoute
   AppDelegationRoute: typeof AppDelegationRoute
   AppDocumentsRoute: typeof AppDocumentsRoute
@@ -275,7 +255,6 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppChatRoute: AppChatRoute,
   AppCodegraphRoute: AppCodegraphRoute,
   AppDelegationRoute: AppDelegationRoute,
   AppDocumentsRoute: AppDocumentsRoute,

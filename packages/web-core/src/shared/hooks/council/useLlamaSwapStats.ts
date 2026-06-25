@@ -84,7 +84,7 @@ export function useLlamaSwapStats(
     };
 
     // llama-swap emits all events as 'message' with a JSON envelope:
-    // { type: "modelStatus" | "metrics" | "inflight" | "logData", data: <payload> }
+    // { type: "restart" | "modelStatus" | "metrics" | "inflight" | "logData", data: <payload> }
     es.onmessage = (e: MessageEvent) => {
       try {
         const envelope = JSON.parse(e.data);
@@ -92,6 +92,26 @@ export function useLlamaSwapStats(
         const payload = envelope?.data;
 
         switch (type) {
+          case 'restart': {
+            // llama-swap restarted or new SSE connection — reset session state
+            const data: { timestamp?: string; version?: string; commit?: string } =
+              typeof payload === 'string' ? JSON.parse(payload) : (payload ?? {});
+            if (import.meta.env.DEV) {
+              console.log(`[llama-swap] restart detected: v${data.version} (${data.timestamp})`);
+            }
+            setStats((prev) => ({
+              ...prev,
+              activityEntries: [],
+              totalRequests: 0,
+              totalInputTokens: 0,
+              totalOutputTokens: 0,
+              totalCacheTokens: 0,
+              sysStats: [],
+              gpuStats: [],
+              logs: [],
+            }));
+            break;
+          }
           case 'modelStatus': {
             let parsed: unknown =
               typeof payload === 'string' ? JSON.parse(payload) : payload;

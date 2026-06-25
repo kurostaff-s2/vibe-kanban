@@ -16,6 +16,8 @@ export interface RestartState {
 export const RESTARTABLE_SERVICES = [
   { id: 'arc-llm', label: 'ARC LLM', description: 'LLM inference server (:18095)' },
   { id: 'memory-service', label: 'Memory Service', description: 'Council memory MCP server' },
+  { id: 'council-backend', label: 'Council Backend', description: 'Council Core API server (:8000)' },
+  { id: 'llama-swap', label: 'Llama Swap', description: 'Model swap proxy (:9292)' },
   { id: 'watch', label: 'Watch Service', description: 'CodeGraph auto-index watcher' },
   { id: 'pplx-embed', label: 'Embedding Service', description: 'TEI/Candle embedding server' },
   { id: 'memsearch-watch', label: 'MemSearch Watch', description: 'Memory search index watcher' },
@@ -112,6 +114,38 @@ export function useServiceRestart() {
     }
   }, []);
 
+  const controlService = useCallback(async (serviceId: string, action: 'start' | 'stop' | 'restart') => {
+    const stateKey = `${serviceId}-${action}`;
+    setStates((prev) => ({ ...prev, [stateKey]: 'restarting' }));
+    setResults((prev) => ({ ...prev, [stateKey]: null }));
+
+    try {
+      const resp = await fetch('/v1/council/service-control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service: serviceId, action }),
+      });
+
+      const data = await resp.json();
+
+      if (resp.ok && data?.ok) {
+        setStates((prev) => ({ ...prev, [stateKey]: 'success' }));
+        setTimeout(() => {
+          setStates((prev) => ({ ...prev, [stateKey]: 'idle' }));
+        }, 3000);
+      } else {
+        setStates((prev) => ({ ...prev, [stateKey]: 'error' }));
+      }
+      setResults((prev) => ({ ...prev, [stateKey]: data }));
+    } catch (e: any) {
+      setStates((prev) => ({ ...prev, [stateKey]: 'error' }));
+      setResults((prev) => ({
+        ...prev,
+        [stateKey]: { ok: false, error: e.message },
+      }));
+    }
+  }, []);
+
   const resetState = useCallback((serviceId?: string) => {
     if (serviceId) {
       setStates((prev) => ({ ...prev, [serviceId]: 'idle' }));
@@ -133,6 +167,7 @@ export function useServiceRestart() {
     restartService,
     restartAll,
     restartSupervisor,
+    controlService,
     resetState,
   };
 }

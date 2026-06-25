@@ -5,6 +5,8 @@ import {
   WarningIcon,
   XIcon,
   PowerIcon,
+  PlayIcon,
+  StopIcon,
 } from '@phosphor-icons/react';
 import { cn } from '@/shared/lib/utils';
 import {
@@ -16,6 +18,7 @@ import {
   useServiceRestart,
   RESTARTABLE_SERVICES,
 } from '@/shared/hooks/council/useServiceRestart';
+import { useCouncilStatus } from '@/shared/hooks/council/useCouncilStatus';
 
 // ── Status Dot ─────────────────────────────────────────────────────────
 
@@ -227,11 +230,12 @@ function LogPanel() {
   );
 }
 
-// ── Service Restart Panel ──────────────────────────────────────────────
+// ── Service Control Panel ─────────────────────────────────────────────
 
-function ServiceRestartPanel() {
-  const { states, results, supervisorRestarting, restartService, restartAll, restartSupervisor } =
-    useServiceRestart();
+function ServiceControlPanel() {
+  const { states, results, supervisorRestarting, restartAll, restartSupervisor, controlService }
+    = useServiceRestart();
+  const { data: councilStatus } = useCouncilStatus();
   const [collapsed, setCollapsed] = useState(false);
   const [confirmSupervisor, setConfirmSupervisor] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -251,22 +255,15 @@ function ServiceRestartPanel() {
     };
   }, []);
 
-  const getStatusIcon = (serviceId: string) => {
-    const state = states[serviceId];
-    if (state === 'restarting') {
-      return (
-        <span className="animate-spin text-brand">
-          <ArrowClockwiseIcon className="h-4 w-4" weight="fill" />
-        </span>
-      );
-    }
-    if (state === 'success') {
-      return <span className="text-green-400">✓</span>;
-    }
-    if (state === 'error') {
-      return <span className="text-red-400">✗</span>;
-    }
-    return <span className="text-low">○</span>;
+  // Build a map of service name (without .service) -> active status
+  const serviceActiveMap = councilStatus?.systemd_services.reduce((acc, svc) => {
+    const name = svc.service.replace('.service', '');
+    acc[name] = svc;
+    return acc;
+  }, {} as Record<string, { active: boolean; pid: number | null }>) ?? {};
+
+  const getActionState = (serviceId: string, action: string) => {
+    return states[`${serviceId}-${action}`];
   };
 
   return (
@@ -278,7 +275,7 @@ function ServiceRestartPanel() {
       >
         <div className="flex items-center gap-2">
           <PowerIcon className="h-4 w-4 text-normal" weight="fill" />
-          <span className="text-sm font-medium text-high">Service Restart</span>
+          <span className="text-sm font-medium text-high">Service Control</span>
         </div>
         <span className="text-xs text-low">{collapsed ? '▼' : '▲'}</span>
       </div>
@@ -292,48 +289,101 @@ function ServiceRestartPanel() {
             </div>
             <div className="space-y-1">
               {RESTARTABLE_SERVICES.map((svc) => {
-                const result = results[svc.id];
+                const svcStatus = serviceActiveMap[svc.id];
+                const isActive = svcStatus?.active ?? null;
+                const pid = svcStatus?.pid;
+                const resultKey = svc.id;
+                const result = results[resultKey];
                 return (
                   <div
                     key={svc.id}
                     className="flex items-center gap-3 px-3 py-2 rounded-md bg-secondary/30 border border-border/50"
                   >
-                    {/* Status icon */}
+                    {/* Active indicator */}
                     <div className="shrink-0 w-6 flex justify-center">
-                      {getStatusIcon(svc.id)}
+                      {isActive === true ? (
+                        <span className="h-2.5 w-2.5 rounded-full bg-green-500 inline-block" />
+                      ) : isActive === false ? (
+                        <span className="h-2.5 w-2.5 rounded-full bg-red-500 inline-block" />
+                      ) : (
+                        <span className="h-2.5 w-2.5 rounded-full bg-yellow-500 inline-block animate-pulse" />
+                      )}
                     </div>
 
                     {/* Service info */}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm text-high">{svc.label}</div>
-                      <div className="text-xs text-low truncate">{svc.description}</div>
+                      <div className="text-xs text-low truncate">
+                        {svc.description}
+                        {pid ? ` · PID ${pid}` : ''}
+                      </div>
                     </div>
 
                     {/* Result/error */}
                     {result && !result.ok && result.error && (
-                      <span className="text-xs text-red-400 truncate max-w-[200px]">
+                      <span className="text-xs text-red-400 truncate max-w-[160px]">
                         {result.error}
                       </span>
                     )}
-                    {result?.new_pid && (
+                    {result?.ok && (
                       <span className="text-xs text-green-400 shrink-0">
-                        PID {result.new_pid}
+                        {result.active ? 'Active' : 'Stopped'}
                       </span>
                     )}
 
-                    {/* Restart button */}
-                    <button
-                      onClick={() => restartService(svc.id)}
-                      disabled={states[svc.id] === 'restarting'}
-                      className={cn(
-                        'px-2.5 py-1 rounded-md text-xs cursor-pointer transition-colors shrink-0',
-                        states[svc.id] === 'restarting'
-                          ? 'bg-brand/20 text-brand opacity-50 cursor-wait'
-                          : 'bg-brand/10 text-brand hover:bg-brand/20'
-                      )}
-                    >
-                      {states[svc.id] === 'restarting' ? 'Restarting...' : 'Restart'}
-                    </button>
+                    {/* Control buttons */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {/* Start */}
+                      <button
+                        onClick={() => controlService(svc.id, 'start')}
+                        disabled={getActionState(svc.id, 'start') === 'restarting'}
+                        title="Start service"
+                        className={cn(
+                          'p-1.5 rounded-md cursor-pointer transition-colors',
+                          getActionState(svc.id, 'start') === 'restarting'
+                            ? 'bg-green-500/20 text-green-400 opacity-50 cursor-wait'
+                            : 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
+                        )}
+                      >
+                        <PlayIcon className="h-3.5 w-3.5" weight="fill" />
+                      </button>
+
+                      {/* Stop */}
+                      <button
+                        onClick={() => controlService(svc.id, 'stop')}
+                        disabled={getActionState(svc.id, 'stop') === 'restarting'}
+                        title="Stop service"
+                        className={cn(
+                          'p-1.5 rounded-md cursor-pointer transition-colors',
+                          getActionState(svc.id, 'stop') === 'restarting'
+                            ? 'bg-red-500/20 text-red-400 opacity-50 cursor-wait'
+                            : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
+                        )}
+                      >
+                        <StopIcon className="h-3.5 w-3.5" weight="fill" />
+                      </button>
+
+                      {/* Restart */}
+                      <button
+                        onClick={() => controlService(svc.id, 'restart')}
+                        disabled={getActionState(svc.id, 'restart') === 'restarting'}
+                        title="Restart service"
+                        className={cn(
+                          'p-1.5 rounded-md cursor-pointer transition-colors',
+                          getActionState(svc.id, 'restart') === 'restarting'
+                            ? 'bg-brand/20 text-brand opacity-50 cursor-wait'
+                            : 'bg-brand/10 text-brand hover:bg-brand/20'
+                        )}
+                      >
+                        <ArrowClockwiseIcon
+                          className={cn(
+                            'h-3.5 w-3.5',
+                            getActionState(svc.id, 'restart') === 'restarting' && 'animate-spin'
+                          )}
+                          weight="fill"
+                        />
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -544,7 +594,7 @@ export function InfraDashboard() {
       })()}
 
       {/* Service Restart Panel */}
-      <ServiceRestartPanel />
+      <ServiceControlPanel />
 
       {/* Log Panel */}
       {showLogs && <LogPanel />}
